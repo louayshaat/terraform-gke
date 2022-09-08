@@ -15,14 +15,27 @@ variable "gke_num_nodes" {
 
 # GKE cluster
 resource "google_container_cluster" "primary" {
-  name     = "${var.project_id}-gke2"
+  name     = "${var.project_id}-gke"
   location = var.region
   initial_node_count       = 2
   network    = google_compute_network.vpc.name
   subnetwork = google_compute_subnetwork.subnet.name
   remove_default_node_pool = true
+  resource_usage_export_config {
+    enable_network_egress_metering = true
+    enable_resource_consumption_metering = true
+    bigquery_destination {
+      dataset_id = "all_billing_data"
+    }
+  }
+  dns_config {
+    cluster_dns = "CLOUD_DNS"
+  }
+  authenticator_groups_config {
+    security_group = "gke-security-groups@louays.altostrat.com"
+  }
   ip_allocation_policy {
-    cluster_ipv4_cidr_block  = ""
+    cluster_ipv4_cidr_block  = "10.11.0.0/21"
     services_ipv4_cidr_block = "10.0.0.0/20"
   }
   networking_mode = "VPC_NATIVE"
